@@ -1,0 +1,123 @@
+---
+title: "Data605 HW4"
+author: 'jfor: Josh Forster'
+date: "2023-02-16"
+output: html_document
+---
+
+
+With the attached data file, build and visualize  eigenimagery that accounts for 80% of the variability.  Provide full R code and discussion.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(stringr)
+library(OpenImageR)
+library(recolorize)
+library(ggplot2)
+```
+
+#### Load jpg images and prepare first value
+
+```{r}
+filepath <- paste0(getwd(),'/jpg')
+list_of_files <- list.files(path='./jpg',pattern = ".jpg$")
+
+picpath <- file.path(filepath,list_of_files[1])
+
+img <- readImage(picpath)
+
+#First Example Shoe Image
+imageShow(img)
+
+```
+
+#### Reshape jpg files from arrays (R x G x B) into single column vectors
+
+## Combine each image into the matrix
+
+```{r}
+
+img_mat <- matrix(0,ncol=length(list_of_files),prod(dim(img)))
+
+#Loading Image Guide: https://cran.r-project.org/web/packages/OpenImageR/vignettes/The_OpenImageR_package.html
+
+#Helpful for understanding components of loaded img array and how to use them: https://cran.r-project.org/web/packages/recolorize/vignettes/step01_loading.html
+
+for (i in 1:length(list_of_files)){
+    tmp_img <- file.path(filepath,list_of_files[i])
+    func_img <- readImage(tmp_img)
+    
+    r_img  <- as.vector(func_img[,,1])
+    g_img  <- as.vector(func_img[,,2])
+    b_img  <- as.vector(func_img[,,3])
+    img_mat[,i] <- c(r_img,g_img,b_img)
+}
+```
+
+#### Scale Matrix for comparison 
+
+```{r}
+scaled_imgs <- scale(as.data.frame(img_mat),center=TRUE,scale=TRUE)
+shoe_mean <- attr(scaled_imgs, "scaled:center")
+shoe_sd <- attr(scaled_imgs, "scaled:scale")
+```
+
+#### Correlation Matrix & Eigen of Scaled Images
+
+The correlation matrix is used to obtain the variance between each image vector which can then be used to determine the principle components that make up the variance across all shoes by finding the eigenspace.
+
+```{r}
+cor_mat <- cor(scaled_imgs)
+eigen_data <- eigen(cor_mat)
+pc_var <- cumsum(eigen_data$values)/sum(eigen_data$values)
+var_threshold <- head(eigen_data$values/sum(eigen_data$values),which(pc_var>0.8)[1])
+```
+
+
+#### Examining the cumulative variance explained from PCA
+
+```{r}
+ggplot(as.data.frame(pc_var),aes(x=seq(1:length(pc_var)),y=pc_var)) +
+    geom_line() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1)) +
+    geom_hline(yintercept=0.8,linetype='dashed') +
+    xlab("Principal Component") + 
+    ylab("Variance Explained") +
+    labs(title='Cumulative Variance Explained by PCs',subtitle = '>80% variance explained by the principal components')
+
+```
+
+#### Scree Plot of subset of principal components that explain 80% of the variance in the shoe images
+
+```{r}
+ggplot(as.data.frame(var_threshold),aes(x=paste0("PC",seq(1:length(var_threshold))),y=var_threshold)) +
+    geom_bar(stat='identity') +
+    xlab("Principal Component") + 
+    ylab("Variance Explained") +
+    labs(title='Scree Plot')
+```
+
+#### Singular Value Decomposition to depict an eigenshoe
+
+\[AW^TV = U\]
+Source: https://www.geeksforgeeks.org/singular-value-decomposition-svd/
+\[A\]:  Original scaled matrix of shoe image vectors
+\[V\]:  matrix containing the orthonormal eigenvectors of \[A^{T}A\]
+\[W\]:  transpose of nxn diagonal matrix of the square roots of the eigenvalues of \[A^{T}A\]
+
+
+```{r}
+w_t <- eigen_data$values[1:which(pc_var>0.8)[1]]^(-1/2)/(sqrt(nrow(scaled_imgs)-1))
+eigenshoes <- scaled_imgs %*% eigen_data$vectors[,1:which(pc_var>0.8)[1]] %*% w_t
+
+#reshaping eigenshoe single vector into jpg array format using initial loaded image dimensions
+imageShow(array(eigenshoes[,1],dim(img)))
+```
+
+
+
+
+
