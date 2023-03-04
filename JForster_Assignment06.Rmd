@@ -1,0 +1,151 @@
+---
+title: "Data605: HW6 Combinatorics"
+author: 'jfor: Josh Forster'
+date: "2023-03-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. A bag contains 5 green and 7 red jellybeans. How many ways can 5 jellybeans be withdrawn from the bag so that the number of green ones withdrawn will be less than 2?
+
+$\binom{5}{1} * \binom{7}{4} + \binom{7}{5}$
+
+```{r}
+choose(5,1) * choose(7,4)+choose(7,5)
+```
+
+
+2. A certain congressional committee consists of 14 senators and 13 representatives. How many ways can a subcommittee of 5 be formed if at least 4 of the members must be representatives?
+
+$\binom{13}{4} * \binom{14}{1} + \binom{13}{5}$
+
+```{r}
+choose(13,4) * choose(14,1)+choose(13,5)
+```
+
+If a coin is tossed 5 times, and then a standard six-sided die is rolled 2 times, and finally a group of three cards are drawn from a standard deck of 52 cards without replacement, how many different outcomes are possible?
+
+5 tosses of 2 possible outcomes combined with 2 rolls with 6 possible outcomes combined with 52 cards to select times 51 remaining cards to select times 50 remaining cards in the deck to select
+
+```{r}
+(2 ** 5) * (6 ** 2)*(52*51*50)
+```
+
+4. 3 cards are drawn from a standard deck without replacement. What is the probability that at least one of the cards drawn is a 3? Express your answer as a fraction or a decimal number rounded to four decimal places.
+
+There are 3 different scenarios that need to be accounted for to calculate the total probability of this problem and since we are focused on the probability the order/combinations won't affect the calculation
+1) 1 of the cards drawn is a 3. I was almost tricked by only using the single probability for each selection without considering the permutations involved.
+
+$\frac{\binom{4}{1}\binom{48}{2}}{\binom{52}{3}}$
+
+2) 2 of the cards drawn are a 3
+
+$\frac{\binom{4}{2}\binom{48}{1}}{\binom{52}{3}}$
+
+3) all 3 of the cards drawn are 3s
+
+$\frac{\binom{4}{3}\binom{48}{0}}{\binom{52}{3}}$
+
+Alternatively we could just use the complement for no 3's
+
+$1-\frac{\binom{4}{0}\binom{48}{3}}{\binom{52}{3}}$
+
+
+```{r}
+
+
+one_three <-  (choose(4,1)*choose(48,2))/choose(52,3)
+two_three <- (choose(4,2)*choose(48,1))/choose(52,3)
+three_three <- (choose(4,3)*choose(48,0))/choose(52,3)
+
+sprintf('The probability of this scenario is: %f',round(one_three+two_three+three_three,4))
+print(round(1-(choose(4,0)*choose(48,3))/choose(52,3),4))
+#validation
+round(1-(48/52)*(47/51)*(46/50),4)
+
+```
+
+
+5. Lorenzo is picking out some movies to rent, and he primarily interested in documentaries and mysteries. He has narrowed down his selections to 17 documentaries and 14 mysteries. 
+
+Step 1. How many different combinations of 5 can he rent?
+
+$\binom{31}{5}$
+
+```{r}
+choose(31,5)
+```
+
+Step 2. How many different combinations of 5 movies can he rent if he wants at least one mystery?
+
+```{r}
+more_work <- choose(14,1)*choose(17,4)+choose(14,2)*choose(17,3)+choose(14,3)*choose(17,2)+choose(14,4)*choose(17,1)+choose(14,5)
+
+#complement
+mov_comp <- choose(31,5)-choose(17,5)
+
+mov_comp == more_work
+mov_comp
+```
+
+6. In choosing what music to play at a charity fund raising event, Cory needs to have an equal number of symphonies from Brahms, Haydn, and Mendelssohn. If he is setting up a schedule of the 9 symphonies to be played, and he has 4 Brahms, 104 Haydn, and 17 Mendelssohn symphonies from which to choose, how many different schedules are possible? Express your answer in scientific notation rounding to the hundredths place.
+
+Besides choosing the different combinations, we need to also account for the number of different ways to arrange all 9 symphonies and incorporate the factorial of the total choices
+
+```{r}
+six_answer <- factorial(9) * choose(4,3)*choose(104,3)*choose(17,3)
+
+formatC(six_answer, format='e', digits = 3)
+```
+
+
+7. An English teacher needs to pick 13 books to put on his reading list for the next school year, and he needs to plan the order in which they should be read. He has narrowed down his choices to 6 novels, 6 plays, 7 poetry books, and 5 nonfiction books.
+
+Step 1. If he wants to include no more than 4 nonfiction books, how many different reading schedules are possible? Express your answer in scientific notation rounding to the hundredths place.
+
+```{r}
+seven_complement <- factorial(13)*(choose(6+6+7+5,13)-choose(19,8)*choose(5,5))
+seven_full <- factorial(13)*(choose(5,4)*choose(19,9)+choose(5,3)*choose(19,10)+choose(5,2)*choose(19,11)+choose(5,1)*choose(19,12)+choose(5,0)*choose(19,13))
+
+seven_complement == seven_full
+
+format(seven_complement, scientific=TRUE, digits = 3)
+```
+
+
+Step 2. If he wants to include all 6 plays, how many different reading schedules are possible? Express your answer in scientific notation rounding to the hundredths place.
+
+
+```{r}
+seven_steptwo <- factorial(13) * choose(6,6) * choose(6+7+5,7)
+format(seven_steptwo, scientific=TRUE, digits = 3)
+
+```
+
+
+8. Zane is planting trees along his driveway, and he has 5 sycamores and 5 cypress trees to plant in one row. What is the probability that he randomly plants the trees so that all 5 sycamores are next to each other and all 5 cypress trees are next to each other? Express your answer as a fraction or a decimal number rounded to four decimal places.
+
+```{r}
+round((factorial(2)*factorial(5)*factorial(5))/factorial(10),4)
+```
+
+
+9. If you draw a queen or lower from a standard deck of cards, I will pay you $4. If not, you pay me $16. (Aces are considered the highest card in the deck.)
+
+Step 1. Find the expected value of the proposition. Round your answer to two decimal places. Losses must be expressed as negative values.
+```{r}
+4*(44/52)-16*(8/52)
+```
+
+
+Step 2. If you played this game 833 times how much would you expect to win or lose? Round your answer to two decimal places. Losses must be expressed as negative values.
+
+
+```{r}
+833 * (4*(44/52)-16*(8/52))
+```
+
+
