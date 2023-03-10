@@ -1,0 +1,109 @@
+---
+title: 'Data605: HW7'
+author: 'jfor: Josh Forster'
+date: "2023-03-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Let X1, X2, . . . , Xn be n mutually independent random variables, each of which is uniformly distributed on the integers from 1 to k. Let Y denote the minimum of the Xi’s. Find the distribution of Y .
+
+This [source] (https://math.dartmouth.edu/archive/m20f10/public_html/HW5Solutions.pdf) was very helpful in understanding the way to approach this problem: 
+
+The total possible combinations of Y that can be obtained is $k^n$ given they are independent random variables and can have n total permutations. This total value will be important given that that there is a uniform distribution. If the range of the uniform distribution of Xi's begins at 1, then $(k-1)$ would be the polynomial term representing the values where y is greater than 1 as otherwise it would be below the minimum of the range as specified. By using the complement to identify where Y=1 then $k^n - (k-1)^n$ should represent all of the potential options where X does equal 1. If the same logic is applied to find the potential values for Y where it is greater than 2 $(k-2)$ then $(k-2)^n$ would represent all of the possible permutations of the random variable for this value of X. The complement for the value of X=2 can be obtained by  $k^n - (k-2)^n$ and it could also be identified for X=3 by taking $k^n - (k-3)^n$
+
+When taking the difference between these two values similar to using integration to capture the area of this function between potential values:
+
+$k^n - (k-3)^n - (k^n - (k-2)^n)$ 
+
+Simplifying the terms gets:
+
+$(k-2)^n - (k-3)^n$ 
+
+Using the same process between 2 and 1:
+
+$k^n - (k-2)^n - (k^n - (k-1)^n)$ becomes $(k-1)^n - (k-2)^n$ 
+
+This process could be repeated for all values through $k$ but it looks as though it will lead to the same simplified term 
+$(k - x +1)^n -(k - x)^n $
+
+Given that this is a uniform distribution, the same probability is needed for all potential values in this distribution, which as previously derived above is $k^n$ so the probability distribution of Y should be:
+
+$\frac{(k- x +1)^n -(k - x)^n}{k^n}$
+
+2. Your organization owns a copier (future lawyers, etc.) or MRI (future doctors). This machine has a manufacturer’s expected lifetime of 10 years. This means that we expect one failure every ten years. (Include the probability statements and R Code for each part.).
+
+
+a. What is the probability that the machine will fail after 8 years?. Provide also the expected value and standard deviation. Model as a geometric. (Hint: the probability is equivalent to not failing during the first 8 years..)
+
+$P(X=x) = p(1-p)^{n-1}$
+
+```{r}
+p <- 1/10
+geo_prob <- (1-p)**(8-1)*p**0
+sprintf('The probability that the machine fails modeled using the geometric model is: %f',geo_prob)
+geo_fx <- 1/p
+sprintf('The expected value for the geometric distribution is %f',geo_fx)
+
+std_geo <- sqrt(1-p)/p
+sprintf('The standard deviation in the geometric model for this example is: %f',std_geo)
+
+```
+
+b. What is the probability that the machine will fail after 8 years?. Provide also the expected value and standard deviation. Model as an exponential.
+
+$\lambda e^{-\lambda t}$
+
+```{r}
+mu_ex <- 10
+ex_lambda <- 1/mu_ex
+t <- 8
+p_exp <- ex_lambda * exp(ex_lambda*t)
+
+sprintf('The probability that the machine fails modeled using the exponential model is: %f',p_exp)
+
+sprintf('The expected value for the exponential distribution is %f',1/ex_lambda)
+
+std_ex <- sqrt(1/ex_lambda**2)
+sprintf('The standard deviation in the exponential model for this example is: %f',std_ex)
+```
+
+c. What is the probability that the machine will fail after 8 years?. Provide also the expected value and standard deviation. Model as a binomial. (Hint: 0 success in 8 years)
+
+$\binom{n}{k}(1-p)^{n-k}p^k$
+
+```{r}
+b_prob <- 1/10
+failures <- 8
+bino <- choose(8,0)*(1-b_prob)**8*b_prob**0
+
+sprintf('The probability that the machine will fail after 8 years for the Binomial distribution is %f',bino)
+
+ex_bino <- failures *  b_prob
+print(ex_bino)
+sprintf('The expected value in the binomial model for this example is: %f',ex_bino)
+std_bino <- sqrt(failures * b_prob * (1-b_prob))
+sprintf('The standard deviation in the binomial model for this example is: %f',std_bino)
+```
+
+
+d. What is the probability that the machine will fail after 8 years?. Provide also the expected value and standard deviation. Model as a Poisson.
+
+$\frac{\lambda^k}{k!} e^{-\lambda}$
+
+```{r}
+    
+lambda <- 10
+poisson_prob <- lambda ** 8 * exp(-lambda) / factorial(8)
+
+
+sprintf('The probability that the machine will fail after 8 years for the Poisson distribution is %f',poisson_prob)
+
+sprintf('The expected value for the Poisson distribution is %f',lambda)
+
+sprintf('The standard deviation for the Poisson distribution is %f',sqrt(lambda))
+```
+
