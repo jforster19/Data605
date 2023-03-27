@@ -1,0 +1,77 @@
+---
+title: 'Data605: HW9'
+author: 'jfor: Josh Forster'
+date: "2023-03-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+The price of one share of stock in the Pilsdorff Beer Company (see Exercise 8.2.12) is given by Yn on the nth day of the year. Finn observes that the differences Xn = Yn+1 − Yn appear to be independent random variables with a common distribution having mean μ = 0 and variance σ2 = 1/4. If Y1 = 100, estimate the probability that Y365 is
+
+(a) ≥ 100. #given that this is equal to mean I expected this value to be 50% without running the calculation since the mean should represent 50% of the curve on either side.
+(b) ≥ 110.
+(c) ≥ 120.
+
+$\sigma= \sqrt{n \sigma^2}$
+
+```{r}
+std_dev <- sqrt(365 * (1/4))
+
+pnorm(100-100,0,sd=std_dev,lower.tail = F)
+
+pnorm(110-100,0,sd=std_dev,lower.tail = F)
+
+pnorm(120-100,0,sd=std_dev,lower.tail = F)
+
+```
+
+
+Calculate the expected value and variance of the binomial distribution using the moment generating function. Helpful [link](https://online.stat.psu.edu/stat414/book/export/html/676) working through the proof steps a bit more detailed than the textbook
+
+$B(n,p,j) = \binom{n}{j}q^{n-x}p^x$
+
+$\sum_{x = 0}^{n} e^{xt}\binom{n}{j}q^{n-x}p^x$
+
+$\sum_{x = 0}^{n} (pe^t)^x \binom{n}{j}q^{n-x}$
+
+$(pe^t + q)^n$
+
+Taking the first derivative of the moment
+
+$\frac{dGt}{dt} = n(pe^tq)^{n-1}pe^t$
+
+$g'(t)  =  n(pe^0+q)^{n-1}pe^0 = np(p+q)^{n-1}$
+
+$g'(t)  =  np(1)^{n-1} = np$
+
+$g''(t) = n(q+pe^t)^{n-1}(pe^t)+pe^tn(n-1)(q+pe^t)^{n-2}pe^t$
+
+$g''(t) = n(1-p+pe^0)^{n-1}(pe^t)+pe^tn(n-1)[1-p+pe^0]^{n-2}pe^0$
+
+$g''(t) = n(1)^{n-1}(p)+pn(n-1)1^{n-2}p = np + n^2p^2 - np^2$
+
+$\sigma^2 = g''(t) - g'(t)^2 = \space np + n^2p^2 - np^{2} - (np)^2 = np(1-p)$
+
+
+Calculate the expected value and variance of the exponential distribution using the moment generating function.
+
+Helpful to see the steps listed in this [example](https://online.stat.psu.edu/stat414/lesson/15/15.2)
+
+$g(t) = \frac{1}{1-\lambda t} = (1-\lambda t)^{-1}$
+
+
+$\mu  = g'(t) = -(1-\lambda t)^{-2}(-\lambda)$
+
+
+$\mu  = g'(t) = -(1-0)^{-2}(-\lambda) = \lambda$
+
+$g''(t) = -2\lambda(1-\lambda t)^{-3} (-\lambda) |_{t=0} = -2\lambda(1-0)^{-3}(-\lambda)$
+
+$g''(t) = 2\lambda^2$
+
+$\sigma^2 = g''(t) - g'(t)^2 = 2\lambda^2 - \lambda^2 = \lambda ^2$
+
