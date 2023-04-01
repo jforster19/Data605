@@ -1,0 +1,75 @@
+---
+title: 'Data605: HW10'
+author: 'jfor: Josh Forster'
+date: "2023-03-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(expm)
+```
+
+Smith is in jail and has 1 dollar; he can get out on bail if he has 8 dollars.
+A guard agrees to make a series of bets with him. If Smith bets A dollars, he wins A dollars with probability .4 and loses A dollars with probability .6.
+
+```{r}
+mat <- matrix(c(0.4,0.6))
+
+zero <- matrix(0,9,9)
+print(zero)
+zero[1,1]<-1
+zero[9,9] <- 1
+for (i in 1:ncol(zero)){
+    if (i==1){
+        zero[i+1,1]=0.6
+    }
+    else if (i<ncol(zero) & i>1){
+        zero[i,i+1]<-0.4
+        zero[i+1,i]<-0.6
+    }
+}
+print(zero)
+```
+
+
+Find the probability that he wins 8 dollars before losing all of his money if
+(a) he bets 1 dollar each time (timid strategy).
+
+$\frac{(\frac{q}{p})^i-1}{(\frac{q}{p})^n-1}$
+
+
+```{r}
+((0.6/0.4)-1)/((0.6/0.4)**8-1)
+```
+
+(b) he bets, each time, as much as possible but not more than necessary to bring his fortune up to 8 dollars (bold strategy).
+
+Given the bold strategy, we would expect that the prisoner would bet all of their money each round as it is necessary to do so in order to reach the fortune N in this problem {1,2,4,8}. Based on the fact that we will always have less than or equal to one half the fortune, the alternative scenario (losing) has zero probability given that will cause the prisoner to lose the game. By risking all of their money each bet, there is only one possible combination of successive bets that would allow the prisoner to reach the fortune.
+
+This [textbook](https://people.math.umass.edu/~lr7q/m456-spring2019/Chapter4.pdf) does a good job of explaining the recursive algorithm to calculate the probability and clarifies that the distribution function is in fact different above and below half of the fortune.
+G(z) = probability to reach a fortune
+$pG(z) = p^2; z<=\frac{1}{2}$
+$pG(z)*G(z) = 0.4G(2)G(4) = 0.4*0.4^2 = 0.064$
+
+```{r}
+bold_mat = matrix(0,5,5)
+
+bold_mat[5,5]<-1
+bold_mat[1,1]<-1
+bold_mat[3:nrow(bold_mat)-1,1] <- 0.6
+
+for (i in 1:ncol(bold_mat)){
+    if (i>1 & i<ncol(bold_mat)){
+        bold_mat[i,i+1]<-0.4
+    }
+}
+bold_mat^3
+```
+
+Taking the matrix to the 3rd power we can also see that the transition matrix approaches the same probability
+
+
+(c) Which strategy gives Smith the better chance of getting out of jail?
+
+The bold strategy gives Smith the better chance of getting out of jail when it is an unfair game (i.e P<1/2)
