@@ -1,0 +1,69 @@
+---
+title: 'Data605: HW11'
+author: 'jfor: Josh Forster'
+date: "2023-04-11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+Using the “cars” dataset in R, build a linear model for stopping distance as a function of speed and replicate the analysis of your textbook chapter 3 (visualization, quality evaluation of the model, and residual analysis.)
+
+### Preliminary Review of the Numeric Variables
+
+```{r}
+summary(cars)
+```
+
+There is less variability in the speed variable from reviewing the summary statistics
+
+```{r}
+glimpse(cars)
+```
+
+It does seem a little bit surprising that the distances are even values, but perhaps there was some rounding done to simplify this pre-loaded dataset or the measuring techniques were not designed to be percise (documentation indicates these values were obtained in the 1920s).
+
+### Initial Scatterplot
+
+The first way to inspect for a potential linear relationship between a dependent and independent variable is to graph it in a scatterplot. It will be somewhat obvious if the relationship does not appear to be linear between the two variables.
+
+```{r}
+data(cars)
+ggplot(cars,aes(x=speed,y=dist)) +
+    geom_point() +
+    geom_smooth(method='lm')
+```
+
+There appears to be a fairly strong positive relationship between speed and stopping distance in which the distance it takes to stop increases with an increase in speed. The best fit line appears to do a pretty good job approximating the dependent and independent variables.
+
+### Simple Linear Regression Model
+
+```{r}
+car.lm <- lm(dist ~ speed, data=cars)
+summary(car.lm)
+```
+
+It appears that the p-value from this SLR model is very small indicating that there is solid evidence of a linear relationship between the predictor and responses variables. From reviewing the summarized residual data, the average is close to zero and the quartiles are fairly similar to one another although there is a slight right skew between the min and max given the larger positive residuals. Lastly, the R-Squared statistic indicates that about 65% of the variability in distance cane be explained by the variance of the independent variable.
+
+### Diagnostic Plots
+
+Assessing if any assumptions are violated to run SLR with this dataset
+
+```{r}
+par(mfrow=c(2,2))
+plot(car.lm)
+```
+
+The expecatation when evaluating the residuals and the standardized residuals on the two left plots are that there will not be a clear pattern or trend visible when looking at the graphs. The residuals appear to center around zero which indicates that the positive and negative differences balance each other out and more likely approximate a normal curve.
+
+The Normal Q-Q Plot at the top right further solidifies the evaluation of normality of the residuals as the graph should somewhat closely follow the best case normal line. As expected in most real world data sets, there is some natural variation off this line which is typically at the largest and smallest values. There is a slight right skew to this cars dataset as was evidenced from the scatter plot chart.
+
+The Residuals vs Leverage plot is used to assess the impact of outliers on the model in terms of modifying other residuals. There appear to be a few points that have a large impact on the model given their leverage. Point 39 or potentially 49 are closest to Cook's distance line which signifies influential points that are impacting the regression coefficients. Given they are still within the edge of the constraints for this plot, there would not be significant impact if these points were removed from the model.
+
+### Conclusion
+
+After following the outlined approach to assess the linear relationship of the two variables in the cars datas et it appears there is a statistically significant relationship between stopping distance and speed. A linear model is a fair method for measuring the variation between the dependent and independent inputs. Although the SLR and the speed does a decent job of estimating the distance to stop a car, there are likely other factors at play that will help increase the explained variability such as the weight of the car or the age of the brakes that could be further explained in MLR.
+
