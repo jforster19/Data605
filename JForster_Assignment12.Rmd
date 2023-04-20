@@ -1,0 +1,140 @@
+---
+title: 'Data605: HW12'
+author: 'jfor: Josh Forster'
+date: "2023-04-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(car)
+```
+
+Provided dataset from 2008 with the following variables included:
+Country: name of the country
+LifeExp: average life expectancy for the country in years
+InfantSurvival: proportion of those surviving to one year or more
+Under5Survival: proportion of those surviving to five years or more
+TBFree: proportion of the population without TB.
+PropMD: proportion of the population who are MDs
+PropRN: proportion of the population who are RNs
+PersExp: mean personal expenditures on healthcare in US dollars at average exchange rate
+GovtExp: mean government expenditures per capita on healthcare, US dollars at average exchange rate 
+TotExp: sum of personal and government expenditures.
+
+```{r}
+df <- read.csv('https://raw.githubusercontent.com/jforster19/Data605/main/HW12_input.csv')
+head(df)
+```
+
+```{r}
+summary(df)
+```
+
+
+1. Provide a scatterplot of LifeExp~TotExp, and run simple linear regression. Do not transform the variables. Provide and interpret the F statistics, R^2, standard error,and p-values only. Discuss whether the assumptions of simple linear regression met.
+
+### The scatterplot of total expendenditure vs life expectancy
+
+```{r}
+ggplot(df,aes(x=TotExp,y=LifeExp)) +
+    geom_point()
+```
+
+The relationship of the variables does not appear to be linear perhaps warranting a quadratic term or further transformation
+
+```{r}
+lm.out <- lm(LifeExp~TotExp,data=df)
+summary(lm.out)
+```
+
+The F-Statistic indicates that the model has a statistical difference from an intercept only model. The residuals are not centered on zero (only slightly skewed) or evenly spread as the left skew is much higher than the right, which based on the scatterplot makes some sense. The R-Squared is 25.77% which indicates that not much of the variation is explained by the model. The Standard error provided is about 8 times smaller than the coefficient estimate which indicates there is an acceptable level of variability within the calculated value of the coefficient. Lastly, the p-value for Total expenditures is statistically significant as a predictor even at a very low alpha level.
+
+
+### Diagnostic Plots
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm.out)
+```
+
+The diagnostic plots indicate that several of the assumptions needed for a simple linear regression are violated. The fitted residuals show a clear pattern although it appear to be non-linear and the residuals do not appear to be normal with substantial skews on both ends of the distribution.
+
+2. Raise life expectancy to the 4.6 power (i.e., LifeExp^4.6). Raise total expenditures to the 0.06 power (nearly a log transform, TotExp^.06). Plot LifeExp^4.6 as a function of TotExp^.06, and r re-run the simple regression model using the transformed variables. Provide and interpret the F statistics, R^2, standard error, and p-values. Which model is "better?"
+
+### Simple Linear Regression and Diagnostic Plots
+
+```{r}
+df$TotExp_pwr <- df$TotExp^0.06
+df$LifeExp_pwr <- df$LifeExp^4.6
+power_lm <- lm(LifeExp_pwr~TotExp_pwr,data=df)
+summary(power_lm)
+
+par(mfrow=c(2,2))
+plot(power_lm)
+
+```
+
+### Reviewing Scatterplot of Newly Transformed Fields
+
+```{r}
+ggplot(df,aes(TotExp_pwr,LifeExp_pwr)) +
+    geom_point()
+```
+
+Similar to the prior version of the model the F-statistic is significant indicating the model is different than only using the intercept to predict the independent variable. From an initial scan of the residual it appears that required assumptions still seem to be violated given they are not centered around zero and do not seem to be evenly spread on both the higher and lower values of transformed total expenditures. The p-value seems to be significant and the standard error for the coefficient is 22 times smaller indicating lower variability in the coefficient estimate. The R-Squared term is much higher within this model as it explains far more variation in the dependent variable at 72.98%.
+
+The fitted residuals do not appear to display a pattern across the range of values, but they are not centered around zero so it still violates a key assumption of linear models. The QQ plot does seem to show better approximation of normality although there is a potentially problematic left skew present.
+
+Although both models do not appear to be valid forms of linear regression, the second transformed model does perform better in explaining the variation in life expectancy if one was to ignore the other shortcomings.
+
+3. Using the results from 3, forecast life expectancy when TotExp^.06 =1.5. Then forecast life expectancy when TotExp^.06=2.5.
+
+
+### Forecasted value
+
+$\hat{y} = -736527910 + 620060216 * TotExp$
+
+Need to take the inverse of the power of 4.6 to calculate the underlying term for life expectancy
+
+```{r}
+(620060216 * 1.5 - 736527910)^(1/4.6)
+```
+
+
+```{r}
+(620060216 * 2.5 - 736527910)^(1/4.6)
+```
+
+
+4. Build the following multiple regression model and interpret the F Statistics, R^2, standard error, and p-values. How good is the model?
+LifeExp = b0+b1 x PropMd + b2 x TotExp +b3 x PropMD x TotExp
+
+```{r}
+mlm.out <- lm(LifeExp~PropMD+TotExp+PropMD*TotExp,data=df)
+summary(mlm.out)
+```
+
+The F-Statistic indicates that the model explains enough of the variation in the response to warrant further review of the coefficients. Another key statistic in the output is the R-Squared and Adjusted R-Squared terms that show that approximately 35% of the variation can be explained using this multiple linear regression model. The standard error ratios to their coefficients appear to be within an acceptable range (e.g. 5 to 10) except for the interaction term, but it is close enough to the low end of the ratio. It may indicate there is more variability within the coefficient that might cause larger residuals. All of the p-values for each of the dependent variables show that they are statistically significant within the model even at very conservative alpha levels. Overall, the base summary statistics indicate the model's residuals are somewhat close to zero, but have a slight leftward skew which we can review further with diagnostic plots to validate key assumptions.
+
+### Diagnostic Plots
+
+```{r}
+par(mfrow=c(2,2))
+plot(mlm.out)
+```
+
+From a visual review of the plotted residuals it is more obvious that the residuals show a clear parabolic pattern and despite appearing to center around zero are not spread very evenly across the range of fitted values. The residuals appear to be somewhat normal except for potentially two large outliers that also are shown to be quite impactful to the model based on the leverage in the bottom right quadrant of the diagnostic plots.
+
+The model itself is merely okay as it only explains about 9 percent more of the variation in life expectancy despite more complexity than the simple linear regression. It also violates the assumption for random distribution of fitted residuals which probably should disqualify someone from using this regression model as a forecasting tool.
+
+5. Forecast LifeExp when PropMD=.03 and TotExp = 14. Does this forecast seem realistic? Why or why not?
+
+$\hat{y} =  6.277*10^1 + 1.497*10^{3}*PropMD +7.233*10^{-5}*TotExp - 6.026*10^{-3}*PropMD * TotExp$
+
+```{r}
+6.277*10^1 + 1.497*10^{3}*0.03 +7.233*10^{-5}*14 - 6.026*10^{-3}*0.03 * 14
+```
+
+The forecasted value for life expectancy is 107 which is far higher than any of the values available in the dataset for this response variable despite the fact that one of the inputs (TotExp) is close to it's minimum value. It also is very unlikely that any person despite a high proportion of doctors would have such a high life expectancy so it is reasonable to say this forecast is unrealistic in providing an accurate estimate.
