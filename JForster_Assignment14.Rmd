@@ -1,0 +1,61 @@
+---
+title: 'Data605: Assignment14'
+author: 'jfor: Josh Forster'
+date: "2023-05-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+  1 This week, we’ll work out some Taylor Series expansions of popular functions.
+  
+$f(x) = \frac{1}{(1−x)}$
+
+Given this is the approximation of the geometric series, we know that the first few terms of it are
+
+$1+x^2+x^3+x^4..x^n$
+$\\$
+$\Sigma_{n=0}^{\infty} x^n$
+
+Reviewing the derivatives to demonstrate the pattern
+
+$f(x)=\frac{1}{1-x}$
+$f'(x) = \frac{2*1}{(1-x)^2}$
+$f''(x) = \frac{3*2*1}{(1-x)^3}$
+$f'''(x) = \frac{4*3*2*1}{(1-x)^4}$
+
+Which can be represented as:
+
+$\sum_{n=0}^{\infty} \frac{1}{(x-c)^{n+1}}x^n; c=0 \sum_{n=0}^{\infty} x^n$
+
+$f(x) = e^x$
+$f(x)=e^x$
+$f'(x) = e^x$
+$f''(x) = e^x$
+$f'''(x) = e^x$
+
+Based on the formula/theorom for the Taylor series expansion:
+
+$f(x) \sim \frac{e^c}{0!}(x-c)^0 + \frac{e^c}{1!}(x-c)^1 + \frac{e^c}{2!}(x-c)^2$
+
+$\sum_{n=0}^{\infty} \frac{x^n}{n!}$
+
+$f(x) = ln(1 + x)$
+
+$f'(x)=\frac{1}{1+x}$
+$f''(x)=-\frac{1}{{1+x}^2}$
+$f'''(x)=\frac{2*1}{{1+x}^3}$
+$f''''(x)=-\frac{3*2*1}{{1+x}^4}$
+
+$f(x) \sim 1 - \frac{1}{1!(1+x)}(x-c)^1 +\frac{2}{2!(1+x)}(x-c)^2$ 
+$\Sigma_{n=0}^{\infty} \frac{{-1}^{n}x^{n+1}}{n+1}$
+
+$f(x)=x^{(1/2)}$
+
+$f'(x)=\frac{x^{-\frac{1}{2}}}{2}$
+$f''(x)=-\frac{x^{-\frac{3}{2}}}{4}$
+$f'''(x)=\frac{3x^{-\frac{5}{2}}}{8}$
+
+The [link](https://math.stackexchange.com/questions/996449/is-the-square-root-of-the-absolute-value-function-sqrtx-differentiable) indicates that the function provided in not differentiable at 0 and given the f(x) is not infinitely differentiable it cannot be approximated with Taylor Series approximation.
