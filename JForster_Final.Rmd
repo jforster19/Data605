@@ -1,0 +1,524 @@
+---
+title: 'Data605: Final'
+author: 'jfor: Josh Forster'
+date: "2023-05-09"
+output: 
+    html_document:
+      toc: true
+      theme: united
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(Matrix)
+library(MASS)
+library(car)
+library(ResourceSelection)
+```
+
+## Final Exam
+
+Probability Density 1:  X~Gamma.  Using R, generate a random variable X that has 10,000 random Gamma pdf values. A Gamma pdf is completely describe by n (a size parameter) and lambda (λ , a shape parameter).  Choose any n greater 3 and an expected value (λ) between 2 and 10 (you choose).
+
+*Note: Assuming in the above prompt that the n parameter is supposed to refer to the shape (alpha) and the lambda is referencing the rate (beta)
+
+Probability Density 2:  Y~Sum of Exponentials.  Then generate 10,000 observations from  the sum of n exponential pdfs with rate/shape parameter (λ). The n and λ must be the same as in the previous case. (e.g., mysum=rexp(10000,λ)+rexp(10000,λ)+..)
+
+Probability Density 3:  Z~ Exponential.  Then generate 10,000 observations from  a single exponential pdf with rate/shape parameter (λ). 
+
+```{r}
+set.seed(45)
+lambda <- 6
+alpha <- 4
+n <-10000
+X <- rgamma(n,alpha,lambda)
+Y <- rexp(n,lambda)+rexp(n,lambda)+rexp(n,lambda)+rexp(n,lambda)
+Z<- rexp(n,lambda)
+```
+
+1a: Calculate the empirical expected value (means) and variances of all three pdfs. 
+
+```{r}
+sprintf('Gamma Distribution: The mean of the X random variables is: %f, and the variance is: %f',mean(X),var(X))
+#alpha/lambda,alpha/lambda^2
+
+sprintf('Sum of Exponential Distribution: The mean of the X random variables is: %f, and the variance is: %f',mean(Y),var(Y))
+#alpha/lambda,alpha/lambda^2
+sprintf('Exponential Distribution: The mean of the X random variables is: %f, and the variance is: %f',mean(Z),var(Z))
+#1/lambda,2/lambda^2
+```
+
+
+1b.  Using calculus, calculate the expected value and variance of the Gamma pdf (X).  
+
+
+#### Mean of Gamma Distribution Proof
+
+$$\begin{aligned}
+\int_{0}^\infty x * fx(x) dx \\
+\int_{0}^{\infty} x * \frac{\lambda e^{-\lambda x} \lambda x^{\alpha -1}}{(\alpha -1)!} dx \\
+\int_{0}^{\infty} \frac{ e^{-\lambda x} \lambda x^{(\alpha+1) -1}}{(\alpha -1)!} dx \\
+\frac{(\alpha +1 -1)!}{(\alpha - 1)! \lambda}  \int_{0}^{\infty} \frac{ \lambda e^{-\lambda x} \lambda x^{(\alpha+1) -1}}{(\alpha +1-1)!} dx\\
+
+\frac{(\alpha)!}{(\alpha - 1)! \lambda}  \int_{0}^{\infty} \frac{ \lambda e^{-\lambda x} \lambda x^{\alpha}}{(\alpha)!} dx \\
+
+\Gamma(\alpha +1 , \lambda) = \int f(x) dx = 1 \\ 
+
+\frac{\alpha}{\lambda}
+
+\end{aligned}$$
+
+```{r}
+sprintf('Expected Value approximation: %f, which is very close to the empirical calculation',alpha/lambda)
+```
+
+#### Variance of Gamma Distribution Proof
+
+$$\begin{aligned}
+Var(x)=E(x^2) - (E(x))^2
+
+\int_{0}^\infty x^2 * fx(x) dx \\
+\int_{0}^{\infty} x^2 * \frac{\lambda e^{-\lambda x} \lambda x^{\alpha -1}}{(\alpha -1)!} dx \\
+\int_{0}^{\infty} \frac{ e^{-\lambda x} \lambda^{\alpha-1} x^{(\alpha+2) -1}}{(\alpha -1)!} dx \\
+\frac{(\alpha +2 -1)!}{(\alpha - 1)! \lambda^2}  \int_{0}^{\infty} \frac{ e^{-\lambda x} \lambda^{\alpha-1} \lambda^2 x^{(\alpha+2) -1}}{(\alpha +2-1)!} dx\\
+
+\frac{(\alpha+2-1)!}{(\alpha - 1)! \lambda^2}  \int_{0}^{\infty} \Gamma(\alpha+2,\lambda) dx \\
+
+\frac{(\alpha+2-1)!}{(\alpha - 1)! \lambda^2} * 1 = \frac{(\alpha+1 )\alpha}{ \lambda^2}
+
+Var(x) = \frac{(\alpha+1 )\alpha}{ \lambda^2} - (\frac{\alpha}{\lambda})^2 \\
+Var(x) = \frac{\alpha^2+\alpha - \alpha^2}{ \lambda^2} = \frac{\alpha}{\lambda^2}
+\end{aligned}$$
+
+```{r}
+sprintf('Variance approximation: %f, which is very close to the empirical calculation',alpha/lambda^2)
+```
+
+Using the moment generating function for exponentials, calculate the expected value of the single exponential (Z) and the sum of exponentials (Y)
+
+$$\begin{aligned}
+M(t) = E[e^{tX}] \\
+\int_{0}^{\infty} e^{tx}\lambda e^{-\lambda x} dx \\
+\lambda \int_{0}^{\infty} e^{t-\lambda x} dx \\
+\frac{\lambda}{t- \lambda } \left. e^{(t-\lambda x)} \right|_{0}^{\infty} \\
+\frac{\lambda}{\lambda - t} \\
+
+E(X^n) = M^n_X(0) = \frac{d^n M_x}{dt^n}(0) \\
+
+dt = \frac{\lambda}{(\lambda - t)^2}
+\end{aligned}$$
+
+Taking the first moment of the function using the derivative calculated above for the first moment:
+
+```{r}
+sprintf('The expected value of the first moment is: %f (very close approximation of other methods)',lambda/(lambda - 0)^2) 
+```
+
+Using this [source](https://www.eajournals.org/wp-content/uploads/On-the-Sum-of-Exponentially-Distributed-Random-Variables-A-Convolution-Approach2.pdf) as a reference for the sum of exponential moment generating function:
+
+$M_{x_1+x_2}= \frac{\lambda_1 \lambda_2}{(\lambda_1 -t)(\lambda_2 -t)}$
+
+In this case the lambda is the same value across the different random variables so we can take the nth power (alpha times) the moment function
+
+$$
+\begin{aligned}
+
+(\frac{\lambda}{\lambda - t})^\alpha = (\frac{6}{6 - t})^4 \\
+
+M'(t) = \frac{4*6^4}{(6-t)^5}
+
+\end{aligned}
+$$
+```{r}
+sprintf('The expected value of the first moment is: %f (very close approximation of other methods)',(4*lambda^4)/(lambda - 0)^5) 
+```
+
+1c-e.  Probability.   For pdf Z (the exponential), calculate empirically probabilities a through c.  Then evaluate through calculus whether the memoryless property holds. 
+a.   P(Z> λ| Z> λ/2)		b.  P(Z> 2λ | Z> λ)		b.  P(Z>3λ | Z> λ)
+
+
+$$\begin{aligned}
+P(Z>\lambda|Z>\lambda/2) = \frac{P(Z\leq \lambda \cap Z>\lambda/2 )}{P( Z>\lambda/2)} = \frac{P(\lambda/2 < Z \leq \lambda)}{P( Z>\lambda/2)} \\
+\frac{e^{\frac{\lambda}{2}}-e^\lambda}{e^{\frac{\lambda}{2}}}
+
+\end{aligned}$$
+
+### Empirical vs CDF of Exponential
+
+```{r}
+
+(exp(-lambda/2) - exp(-lambda))/exp(-lambda/2)
+
+1-exp(-lambda/2)
+
+(exp(-lambda) - exp(-2*lambda))/exp(-lambda)
+
+1-exp(-lambda)
+
+(exp(-lambda) - exp(-3*lambda))/exp(-lambda)
+
+1-exp(-2*lambda)
+
+```
+
+Loosely investigate whether P(YZ) = P(Y) P(Z) by building a table with quartiles and evaluating the marginal and joint probabilities.
+
+
+```{r}
+y_quant <- quantile(Y,probs=c(0.25,0.5,0.75,1))
+z_quant <- quantile(Z,probs=c(0.25,0.5,0.75,1))
+```
+
+```{r}
+comb_prob <- as.matrix(z_quant) %*% t(as.matrix(y_quant))
+prob_tbl <- rbind(cbind(comb_prob/sum(comb_prob),c(t(t(rowSums(comb_prob/sum(comb_prob)))),1)),colSums(comb_prob/sum(comb_prob)))
+
+#validation
+for (x in 1:4){
+    print(sum(prob_tbl[x,1:4])==prob_tbl[x,5])
+    print(sum(prob_tbl[1:4,x])==prob_tbl[5,x])
+}
+```
+
+Check to see if independence holds by using Fisher’s Exact Test and the Chi Square Test.  What is the difference between the two? Which is most appropriate?
+
+
+```{r}
+
+ind_test <- comb_prob
+fisher.test(ind_test)
+chisq.test(ind_test)
+```
+
+```{r}
+frmt_mat <- cbind(t(t(y_quant)),t(t(z_quant)))
+fisher.test(frmt_mat)
+chisq.test(frmt_mat)
+```
+
+
+Both tests indicate based on the p-value that you fail to reject the null hypothesis and the two distributions appear to be independent on both the quantiles merged together and the joint probability table. Both were used as the requested test's are designed to compare two variables against one another for independence to see if a slightly alternative input would impact the results. Fisher's Exact Test determines relationships that exist between two categorical variables that are not explained by randomness; however, the initial test was designed to assess 2 x 2 contingency tables and can often be computationally expensive with larger matrices. The Chi Square Test is also used for this same purpose and does not have the same potential performance constraints which is why it is more appropriate in this case to evaluate the question on independence.
+
+
+Kaggle Housing Price Predictions
+
+### Input Data
+
+```{r}
+train_df <- read.csv('https://raw.githubusercontent.com/jforster19/Data605/main/House_Prices_Prediction_train.csv')
+head(train_df)
+```
+
+### Review generic summary of data columns
+
+```{r}
+summary(train_df)
+```
+
+### Review bedroom distribution
+
+```{r}
+hist(train_df$BedroomAbvGr)
+```
+
+### Review Bathroom distribution
+
+```{r}
+hist(train_df$FullBath)
+```
+
+```{r}
+ggplot(train_df,aes(x=YearBuilt)) +
+    geom_bar()
+```
+
+```{r}
+ggplot(train_df,aes(x=BedroomAbvGr,y=SalePrice)) +
+    geom_point() +
+    labs(title='Comparing Sales Price of Homes Against Number of Bedrooms') +
+    xlab('Bedrooms Above Ground')
+```
+
+
+```{r}
+ggplot(train_df,aes(x=GrLivArea,y=SalePrice))+
+    geom_point()
+```
+
+```{r}
+
+ggplot(train_df,aes(x=OverallQual,y=SalePrice))+
+    geom_point()
+
+```
+
+
+```{r}
+ggplot(train_df,aes(x=PoolQC))+
+    geom_bar() +
+    geom_text(stat='count', aes(label=..count..),vjust=-0.25)
+```
+
+```{r}
+ggplot(train_df,aes(MiscFeature))+
+    geom_bar() +
+    labs(title='Review of Frequency of Miscellaneous Features of Property')
+```
+
+```{r}
+ggplot(train_df,aes(SaleType))+
+    geom_bar() +
+    labs(title='Review of Sale Type Frequency') +
+    geom_text(stat='count', aes(label=..count..),vjust=-0.25)
+```
+
+```{r}
+train_df <- train_df |> mutate(age=2022-YearBuilt)
+
+ggplot(train_df,aes(x=age,y=SalePrice))+
+    geom_point() +
+    geom_smooth()
+```
+
+
+```{r}
+corr_df <- train_df |> dplyr::select(c(age,BedroomAbvGr,X1stFlrSF))
+cor_mat <- cor(corr_df,method='pearson')
+
+pairs(corr_df)
+```
+
+### Correlation Hypothesis Test
+
+```{r}
+first_cor_test <- cor.test(corr_df$age,corr_df$X1stFlrSF,conf.level = 0.8)
+first_cor_test
+
+```
+
+
+
+```{r}
+sec_cor_test <- cor.test(corr_df$age,corr_df$BedroomAbvGr,conf.level = 0.8)
+sec_cor_test
+```
+
+
+```{r}
+third_cor_test <- cor.test(corr_df$BedroomAbvGr,corr_df$X1stFlrSF,conf.level = 0.8)
+third_cor_test
+```
+
+
+The correlation test results indicate to reject the null hypothesis given a P-Value below 0.05 for each pairwise comparison. The confidence interval for age vs 1st floor sq ft is (-0.3125892, -0.2507977) , age vs bedroooms above ground is ( 0.03717773, 0.10396633) and bedrooms above ground floor vs 1st floor sq ft (0.09424207,0.16027708) also substantiates that there is a correlation (i.e. that the correlation is not 0) given that 80% of samples taken to compare these two variables would not be expected to contain zero and the true correlation average is not zero. Family wise error, type 1 error rate, does not appear to be that worrying because the p-values provided in each test are far below the alpha threshold which should indicate there is less of a chance that the interpretation is incorrect. Also, in this case there aren't that many risks to rejecting the null hypothesis as the visual eye test seems to indicate some type of linear relationship irrespective of their strength.
+
+### Determine the precision matrix 
+
+```{r}
+if (det(cor_mat)==0){
+   print('Matrix cannot be inverted') 
+}else{
+    prec_mat <- solve(cor_mat)
+}
+```
+
+### Running LU Decomposition
+
+```{r}
+decomb_mat <- cor_mat %*% prec_mat %*% cor_mat
+decomb_mat
+
+str(lum <- lu(decomb_mat))
+elu <- expand(lum)
+
+```
+
+### Lower Matrix from LU Decomposition
+
+```{r}
+elu$L
+```
+
+### Upper Matrix from LU Decomposition
+
+```{r}
+elu$U
+```
+
+### Reviewing Right skewed continuous variables
+
+```{r}
+ggplot(train_df,aes(x=OpenPorchSF)) + #GarageArea WoodDeckSF
+    geom_histogram()
+```
+
+### Transforming the skewed distribution
+
+```{r}
+sum(is.na(train_df$OpenPorchSF))
+
+fit_exp <- MASS::fitdistr(train_df$OpenPorchSF,'exponential')
+fit_exp$estimate
+
+
+exp_hist_data <- rep(sample(rexp(1000,fit_exp$estimate),100),1000)
+par(mfrow=c(1,1))
+
+```
+
+#### Reviewing Original and Transformed Distributions
+
+```{r}
+par(mfrow=c(1,2))
+hist(train_df$OpenPorchSF)
+
+hist(exp_hist_data)
+
+```
+
+The shapes of distributions overall do look fairly similar although there is less right skewness from the transformed exponential and higher concentrations of values closer to zero.
+
+#### Using exponential to review 5th and 95th Percentiles
+
+```{r}
+qexp(0.05,fit_exp$estimate)
+qexp(0.95,fit_exp$estimate)
+```
+
+#### Alternative Methods of Obtaining Confidence Intervals
+
+```{r}
+len_exp <- length(train_df$OpenPorchSF)
+sd_exp <- sd(train_df$OpenPorchSF)
+std_err_exp <- sd_exp/sqrt(len_exp)
+error_rate <- 0.05
+t_var <- qt(p=error_rate/2,df=len_exp-1,lower.tail=F)
+margin_error <- t_var * std_err_exp
+
+paste0('Manually calculated 95% confidence interval: (',t_var-margin_error,",",t_var+margin_error,")")
+#Empirical Percentiles
+quantile(train_df$OpenPorchSF,c(0.05,0.95))
+```
+
+The alternative methods of estimating the 5th and 95th percentiles were not that substantially different, but the reason the confidence interval includes zero is likely because of the large concentration of 0 values where houses did not have porches in the data set. The fit distribution function also determined a lambda that was fairly close to zero so it is not that surprising that the mean value would estimate zero. When comparing the exponential 95th percentile against the original data there is some variance as the exponential transformation slightly minimized the effects of the skew leading to a smaller value as compared to the input data source.
+
+### Multiple Linear Regression Analysis
+
+#### Reviewing relationships of Data
+
+```{r}
+
+quality <- c('Ex','Gd','TA','Fa','Po')
+kitchen_rating <- c(0.9,0.75,0.5,0.25,0.1)
+kitch_df <- data.frame(quality,kitchen_rating)
+train_df <- train_df |>
+    mutate(new_home= ifelse(SaleType=='New',1,0),
+           court_officer=ifelse(SaleType=='COD',1,0),
+           has_porch=ifelse(OpenPorchSF==0 & EnclosedPorch==0,0,1),
+           single_fam = ifelse(BldgType=='1Fam',1,0),
+           twoFmCon = ifelse(BldgType=='2fmCon',1,0),
+           house_unf = ifelse(str_detect(HouseStyle, 'Unf'),1,0),
+           central_air = ifelse(CentralAir=='Yes',1,0),
+           functional_num = ifelse(Functional=='Typ',1,ifelse(str_detect(Functional,'Min'),0.5,ifelse(Functional=='Mod',0,ifelse(str_detect(Functional,'Major'),-0.5,-1)))),
+           kitchen_rating = ifelse(KitchenQual=='Ex',0.9,ifelse(KitchenQual=='Gd',0.75,ifelse(KitchenQual=='TA',0.5,ifelse(KitchenQual=='Fa',0.25,0.1))))
+           )
+
+
+lm.out <- lm(SalePrice ~ BedroomAbvGr +age^2 +GrLivArea+ X2ndFlrSF+ GarageArea+ OverallCond + OverallQual + LotArea+ new_home + court_officer +single_fam  +TotalBsmtSF +LowQualFinSF + kitchen_rating + functional_num,data=train_df)
+
+summary(lm.out)
+```
+
+When reviewing the model summary detail there was one initial item that might be slightly concerning and cause issues for the model. The residual spread which can be further reviewed by the diagnostic plots does not seem to be centered at zero although the remainder of the residuals show somewhat even spread at the interquartile range. The F-statistic confirms that the there is some significance to this linear model and the R-Squared adjusted seems to indicate that just under 80% of the variability in sales price is explained by the independent variables.
+
+```{r}
+subset_df <- train_df |> dplyr::select(c(SalePrice,BedroomAbvGr,age,GrLivArea,X2ndFlrSF,GarageArea,OverallCond,OverallQual,LotArea,TotalBsmtSF,LowQualFinSF,kitchen_rating))
+ResourceSelection::kdepairs(subset_df[,c(1:10)])
+```
+
+```{r}
+vif(lm.out)
+```
+
+Best practice indicates that any Variance Inflation factor over 5 is likely subject to multicollinearity and therefore the model will be subsequently revised to account for this issue.
+
+```{r}
+lm2.out <- lm(SalePrice ~ BedroomAbvGr +age^2 + X2ndFlrSF+ GarageArea+ OverallCond + OverallQual + LotArea+ new_home + court_officer +single_fam  +TotalBsmtSF +LowQualFinSF + kitchen_rating + functional_num,data=train_df)
+
+summary(lm2.out)
+```
+
+Given that certain variables are not considered significant after this change it is necessary to test the impact to the model using backward testing.
+
+### Revised Model
+
+```{r}
+lm3.out <- lm(SalePrice ~ age^2 + X2ndFlrSF+ GarageArea+ OverallCond + OverallQual + LotArea+ new_home  +single_fam  +TotalBsmtSF + kitchen_rating,data=train_df)
+
+summary(lm3.out)
+```
+
+The residuals remains somewhat distant from averaging zero, but the adjusted r-squared hasn't changed dramatically with the substitutions from the earlier version of the model and all of the p-values of the dependent variables are significant.
+
+### Reviewing Diagnostic Plots
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm3.out)
+```
+
+The residuals are still somewhat far from zero and there is somewhat of  pattern in the distribution across the fitted values and that is a potential concern of a violation of this assumption. The normal QQ plot follows a normal approximation for the majority of values; however, the third quantile appear to diverge more substantially
+
+### Confirming VIF
+
+```{r}
+vif(lm3.out)
+```
+
+The variance factors have lowered across the board after revising the model and are no longer of concern.
+
+
+```{r}
+test_df <- read.csv('https://raw.githubusercontent.com/jforster19/Data605/main/House_Prices_Prediction_test.csv')
+dim(test_df)
+
+test_df <- test_df |>
+    mutate(age=2022-YearBuilt, new_home= ifelse(is.na(SaleType),0,ifelse(SaleType=='New',1,0)),
+           GarageArea = ifelse(is.na(GarageArea),0,GarageArea),
+           TotalBsmtSF = ifelse(is.na(TotalBsmtSF),0,TotalBsmtSF),
+           single_fam = ifelse(BldgType=='1Fam',1,0),
+           twoFmCon = ifelse(BldgType=='2fmCon',1,0),
+           house_unf = ifelse(str_detect(HouseStyle, 'Unf'),1,0),
+           central_air = ifelse(CentralAir=='Yes',1,ifelse(is.na(CentralAir),0,0)),
+           functional_num = ifelse(is.na(Functional),0,ifelse(Functional=='Typ',1,ifelse(str_detect(Functional,'Min'),0.5,ifelse(Functional=='Mod',0,ifelse(str_detect(Functional,'Major'),-0.5,-1))))),
+           kitchen_rating = ifelse(is.na(KitchenQual),0.5,ifelse(KitchenQual=='Ex',0.9,ifelse(KitchenQual=='Gd',0.75,ifelse(KitchenQual=='TA',0.5,ifelse(KitchenQual=='Fa',0.25,0.1))))))
+           
+predictions_lm <- cbind(test_df$Id,predict(lm3.out,test_df,interval='prediction'))
+
+```
+
+### Reviewing Null Values
+
+```{r}
+sum(is.na(test_df))
+sapply(test_df, function(x) sum(is.na(x)))
+```
+
+
+### Modifying End Output
+
+```{r}
+head(predictions_lm)
+colnames(predictions_lm) <- c('Id','SalePrice','lwr','upr')
+output_df <- as_tibble(predictions_lm )|> dplyr::select(c('Id','SalePrice'))
+sapply(output_df, function(x) sum(is.na(x)))
+```
+
+### Output Data for Submission
+
+```{r}
+head(output_df)
+write_delim(output_df,'house_price_predictions.csv',delim=',')
+```
+
